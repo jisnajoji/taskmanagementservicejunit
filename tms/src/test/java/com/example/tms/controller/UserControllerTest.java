@@ -13,6 +13,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -26,14 +27,15 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+//@WebMvcTest(UserController.class)
 @ExtendWith(MockitoExtension.class)
 public class UserControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+//    @Autowired
+//    private ObjectMapper objectMapper;
 
     @Mock
     private UserServiceImpl userService;
@@ -49,6 +51,7 @@ public class UserControllerTest {
 
 
     @Test
+//            (expected = BadRequestException.class)
     public void testRegisterUser_MissingUsername() throws Exception {
         UserRequest userRequest = new UserRequest(null, "password", "test@example.com");
 

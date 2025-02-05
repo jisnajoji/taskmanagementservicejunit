@@ -8,6 +8,8 @@ import org.apache.coyote.BadRequestException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -61,6 +63,27 @@ public class UserServiceTest {
         verify(userRepository, times(1)).save(Mockito.any(User.class));
     }
 
+    @ParameterizedTest
+    @CsvSource({
+            "jisna1, jisna1, jisnamaria1@gmail.com",
+            "jisna2, jisna2, jisnamaria2@gmail.com"
+    })
+    void testCreateUserWithValidData(String username, String password, String email) throws BadRequestException {
+        UserRequest request = new UserRequest(username, password, email);
+
+        User user = new User();
+        user.setUsername(username);
+        user.setPassword(password);
+        user.setEmail(email);
+
+        when(userRepository.save(Mockito.any(User.class))).thenReturn(user);
+        when(userRepository.findByUsername(anyString())).thenReturn(null);
+        User createdUser = userService.createUser(request);
+        assertNotNull(createdUser);
+        assertEquals(username, createdUser.getUsername());
+        assertEquals(email, createdUser.getEmail());
+    }
+
     @Test
     void testCreateUser_UsernameAlreadyExists() {
         UserRequest userRequest = new UserRequest();
@@ -77,6 +100,25 @@ public class UserServiceTest {
         verify(userRepository, never()).save(Mockito.any(User.class));
     }
 
+    @ParameterizedTest
+    @CsvSource({
+            "'', password123, email@example.com", // Invalid username
+            "validuser, '', email@example.com", // Invalid password
+            "validuser, password123, ''", // Invalid email
+    })
+    void testCreateUserWithInvalidData(String username, String password, String email) {
+        UserRequest request = new UserRequest(username, password, email);
+        BadRequestException exception = assertThrows(BadRequestException.class, () -> userService.createUser(request));
+
+        if (username == null || username.isBlank()) {
+            assertEquals("Username cannot be null or empty", exception.getMessage());
+        } else if (password == null || password.isBlank()) {
+            assertEquals("Password cannot be null or empty", exception.getMessage());
+        } else if (email == null || email.isBlank()) {
+            assertEquals("Email cannot be null or empty", exception.getMessage());
+        }
+    }
+
     @Test
     void testCreateUser_MissingUsername() {
         UserRequest userRequest = new UserRequest();
@@ -84,7 +126,7 @@ public class UserServiceTest {
         userRequest.setPassword("test");
         userRequest.setEmail("test@test.com");
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+        BadRequestException exception = assertThrows(BadRequestException.class, () -> {
             userService.createUser(userRequest);
         });
 
@@ -98,7 +140,7 @@ public class UserServiceTest {
         userRequest.setPassword(null);
         userRequest.setUsername("username");
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+        BadRequestException exception = assertThrows(BadRequestException.class, () -> {
             userService.createUser(userRequest);
         });
 
@@ -112,7 +154,7 @@ public class UserServiceTest {
         userRequest.setEmail(null);
         userRequest.setPassword("password");
 
-        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> {
+        BadRequestException exception = assertThrows(BadRequestException.class, () -> {
             userService.createUser(userRequest);
         });
 
